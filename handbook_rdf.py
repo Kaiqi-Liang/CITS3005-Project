@@ -1,9 +1,22 @@
 import json
 import re
-from rdflib import FOAF, BNode, Graph, Namespace, Literal, RDF
+from rdflib import FOAF, BNode, Graph, Namespace, Literal, RDF, RDFS
 
 g = Graph()
+
+# Declare namespace
 handbook = Namespace("https://handbooks.uwa.edu.au/")
+
+################# Add initial classes
+# Add assessment types as classes
+g.add((handbook["exam"], RDF.type, RDFS.Class))
+g.add((handbook["test"], RDF.type, RDFS.Class))
+g.add((handbook["presentation"], RDF.type, RDFS.Class))
+g.add((handbook["participation"], RDF.type, RDFS.Class))
+g.add((handbook["practical"], RDF.type, RDFS.Class))
+g.add((handbook["other"], RDF.type, RDFS.Class))
+
+
 
 with open("units.json", "r") as units:
     for unit in json.load(units).values():
@@ -74,4 +87,4 @@ with open("units.json", "r") as units:
         except KeyError:
             continue
     print()
-    g.serialize("handbook.xml", "xml")
+    #g.serialize("handbook.xml", "xml")
