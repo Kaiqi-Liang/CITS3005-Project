@@ -16,6 +16,16 @@ g.add((handbook["participation"], RDF.type, RDFS.Class))
 g.add((handbook["practical"], RDF.type, RDFS.Class))
 g.add((handbook["other"], RDF.type, RDFS.Class))
 
+# Add unit set class
+g.add((handbook["unitset"], RDF.type, RDFS.Class))
+
+################# Add initial relations
+g.add((handbook["assessment"], RDF.type, RDF.Property)) #connect unit to BN
+g.add((handbook["outcome"], RDF.type, RDF.Property)) # connect unit to literal of outcomes
+g.add((handbook["prerequisite_cnf"], RDF.type, RDF.Property)) # connect unit to BN
+g.add((handbook["prerequisite"], RDF.type, RDF.Property)) # connect BN to BN
+
+
 
 
 with open("units.json", "r") as units:
@@ -46,11 +56,12 @@ with open("units.json", "r") as units:
             else:
                 g.add((node, RDF.type, handbook["other"]))
 
-        try:
-            for major in unit["majors"]:
-                g.add((code, handbook["major"], handbook[major]))
-        except KeyError:
-            pass
+        # TODO: will later connect major and units via handbook.unit (using code) rather than strings
+        #try:
+        #    for major in unit["majors"]:
+        #        g.add((code, handbook["major"], handbook[major]))
+        #except KeyError:
+        #    pass
 
         try:
             for outcome in unit["outcomes"]:
