@@ -1,21 +1,11 @@
 import json
 import re
-from rdflib import FOAF, BNode, Graph, Namespace, Literal, RDF, RDFS
+from rdflib import FOAF, BNode, Graph, Namespace, Literal, RDF
 
 g = Graph()
 
 # Declare namespace
 handbook = Namespace("https://handbooks.uwa.edu.au/")
-
-################# Add initial classes
-# Add assessment types as classes
-g.add((handbook["exam"], RDF.type, RDFS.Class))
-g.add((handbook["test"], RDF.type, RDFS.Class))
-g.add((handbook["presentation"], RDF.type, RDFS.Class))
-g.add((handbook["participation"], RDF.type, RDFS.Class))
-g.add((handbook["practical"], RDF.type, RDFS.Class))
-g.add((handbook["other"], RDF.type, RDFS.Class))
-
 
 
 with open("units.json", "r") as units:
@@ -87,4 +77,78 @@ with open("units.json", "r") as units:
         except KeyError:
             continue
     print()
-    #g.serialize("handbook.xml", "xml")
+    g.serialize("handbook.xml", "xml")
+    
+
+    print("Find all units with more than 6 outcomes")
+    for r in g.query(
+    """
+    PREFIX handbook: <https://handbooks.uwa.edu.au/>
+    SELECT ?unit
+    WHERE {
+        ?unit rdf:type handbook:unit ;
+                handbook:outcome ?outcome .
+    }
+    GROUP BY ?unit
+    HAVING (COUNT(?outcome) > 6)
+    """
+    ):
+    print(r.unit)
+    print()
+
+    print(
+    "Find all level 3 units that do not have an exam, and where none of their prerequisites have an exam."
+    )
+    for r in g.query(
+    """
+    PREFIX handbook: <https://handbooks.uwa.edu.au/>
+    SELECT ?unit
+    WHERE {
+        ?unit rdf:type handbook:unit ;
+                handbook:level ?level .
+        FILTER (?level = 3) .
+        FILTER NOT EXISTS {
+            ?unit handbook:assessment handbook:exam .
+        }
+        FILTER NOT EXISTS {
+            ?unit handbook:prerequisite ?prereq .
+            ?prereq handbook:assessment handbook:exam .
+        }
+    }
+    """
+    ):
+    print(r.unit)
+    print()
+
+    print("Find all units that appear in more than 3 majors.")
+    for r in g.query(
+    """
+    PREFIX handbook: <https://handbooks.uwa.edu.au/>
+    SELECT ?unit
+    WHERE {
+        ?unit rdf:type handbook:unit ;
+                handbook:major ?major .
+    }
+    GROUP BY ?unit
+    HAVING (COUNT(?major) > 3)
+    """
+    ):
+    print(r.unit)
+    print()
+
+    print("Basic search functionality")
+    query = input()
+    for r in g.query(
+    f"""
+    PREFIX handbook: <https://handbooks.uwa.edu.au/>
+    SELECT DISTINCT ?unit
+    WHERE {{
+        ?unit rdf:type handbook:unit ;
+                handbook:outcome ?outcome ;
+                handbook:description ?description .
+        FILTER (CONTAINS(LCASE(?outcome), LCASE("{query}")) || CONTAINS(LCASE(?outcome), LCASE("{query}"))) .
+    }}
+    """
+    ):
+    print(r.unit)
+
