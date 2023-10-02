@@ -15,7 +15,7 @@
 
 ## Categoristion
 #### Contact
-- Lecture: "lecture" "note"
+- Lecture: "lecture"
 - Practical classes: "practical"
 - Tutorial
 - Workshops: "seminar" "studio"

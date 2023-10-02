@@ -32,11 +32,11 @@ g.add((handbook["other"], RDF.type, RDFS.Class))
 g.add((handbook["level"], RDF.type, RDF.Property)) # connect unit to int unit level
 g.add((handbook["description"], RDF.type, RDF.Property)) # connect unit to literal description
 g.add((handbook["assessment"], RDF.type, RDF.Property)) #connect unit to BN
+g.add((handbook["contact"], RDF.type, RDF.Property)) #connect unit to BN
+g.add((handbook["forHours"], RDF.type, RDF.Property)) #connect BN to int literal
 g.add((handbook["outcome"], RDF.type, RDF.Property)) # connect unit to literal of outcomes
 g.add((handbook["prerequisite_cnf"], RDF.type, RDF.Property)) # connect unit to BN
 g.add((handbook["prerequisite"], RDF.type, RDF.Property)) # connect BN to BN
-
-
 
 
 with open("units.json", "r") as units:
@@ -50,6 +50,7 @@ with open("units.json", "r") as units:
         g.add((code, handbook["description"], Literal(unit["description"].strip())))
 
         for assessment in unit["assessment"]:
+            assessment = assessment.lower() # make case insensitive
             node = BNode()
             g.add((code, handbook["assessment"], node))
             if "exam" in assessment or "final" in assessment:
@@ -66,6 +67,31 @@ with open("units.json", "r") as units:
                 g.add((node, RDF.type, handbook["practical"]))
             else:
                 g.add((node, RDF.type, handbook["other"]))
+        try:
+            for contact in unit["contact"]:
+                contact = contact.lower()
+                hours = unit["contact"][contact]
+                node = BNode()
+                g.add((code, handbook["contact"], node))
+                if "lec" in contact:
+                    g.add((node, RDF.type, handbook["lecture"]))
+                elif "workshop" in contact or "seminar" in contact or "studio" in contact:
+                    g.add((node, RDF.type, handbook["workshop"]))
+                elif "prac" in contact:
+                    g.add((node, RDF.type, handbook["practical"]))
+                elif "tut" in contact:
+                    g.add((node, RDF.type, handbook["tutorial"]))
+                elif "lab" in contact:
+                    g.add((node, RDF.type, handbook["lab"]))
+                elif "field" in contact or "site" in contact:
+                    g.add((node, RDF.type, handbook["fieldtrip"]))
+                else:
+                    g.add((node, RDF.type, handbook["other"]))
+                
+                g.add((node, handbook["forHours"], Literal(int(hours.strip())))) # add hours to blank node
+        except KeyError:
+            continue
+            
 
         # TODO: will later connect major and units via handbook.unit (using code) rather than strings
         #try:
