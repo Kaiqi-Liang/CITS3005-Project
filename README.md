@@ -12,3 +12,15 @@
 - which major has the least non lecture contact hours
 - which majors can I transfer to from my current completed major so that I only have to take no more than 5 more units
 - which majors don't have any participation or practical assessments
+
+## Categoristion
+#### Contact
+- Lecture: "lecture" "note"
+- Practical classes: "practical"
+- Tutorial
+- Workshops: "seminar" "studio"
+- Fieldtrip: "site visit"
+- Labs
+**Potential issues:** 
+- grouping of 'Lectures and practical hours' or 'lectures/computer labs' in many units
+- contact hours that are not weekly - e.g., fieldtrips show as "1" but are really 1 x 2 Saturdays

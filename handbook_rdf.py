@@ -19,7 +19,18 @@ g.add((handbook["other"], RDF.type, RDFS.Class))
 # Add unit set class
 g.add((handbook["unitset"], RDF.type, RDFS.Class))
 
+# Add contact hour categories as classes
+g.add((handbook["lecture"], RDF.type, RDFS.Class))
+g.add((handbook["practical"], RDF.type, RDFS.Class))
+g.add((handbook["tutorial"], RDF.type, RDFS.Class))
+g.add((handbook["lab"], RDF.type, RDFS.Class))
+g.add((handbook["workshop"], RDF.type, RDFS.Class))
+g.add((handbook["fieldtrip"], RDF.type, RDFS.Class))
+g.add((handbook["other"], RDF.type, RDFS.Class))
+
 ################# Add initial relations
+g.add((handbook["level"], RDF.type, RDF.Property)) # connect unit to int unit level
+g.add((handbook["description"], RDF.type, RDF.Property)) # connect unit to literal description
 g.add((handbook["assessment"], RDF.type, RDF.Property)) #connect unit to BN
 g.add((handbook["outcome"], RDF.type, RDF.Property)) # connect unit to literal of outcomes
 g.add((handbook["prerequisite_cnf"], RDF.type, RDF.Property)) # connect unit to BN
