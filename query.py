@@ -1,6 +1,5 @@
 from ontology import graph
 
-'''
 print("Find all units with more than 6 outcomes")
 for r in graph.query(
     """
@@ -61,7 +60,7 @@ for r in graph.query(
 print()
 
 print("Basic search functionality")
-query = input("What would you like the search: ")
+query = input("What would you like the search? ")
 for r in graph.query(
     f"""
     PREFIX handbook: <https://handbooks.uwa.edu.au/>
@@ -85,8 +84,8 @@ for r in graph.query(
     SELECT DISTINCT ?unit
     WHERE {{
         ?major rdf:type handbook:Major ;
-               handbook:HasUnit ?unit ;
-               handbook:HasCode ?major_code .
+               handbook:HasCode ?major_code ;
+               handbook:HasUnit ?unit .
         FILTER (!CONTAINS(?major_code, "{major_code}")) .
 
         ?unit handbook:HasPrerequisites /  handbook:UnitDisjuntContains / handbook:HasCode ?unit_code .
@@ -95,24 +94,28 @@ for r in graph.query(
     """
 ):
     print(r.unit)
-'''
-print("Find all the units that have less than 5 contact hours in total (summing all different types of contact hours)")
+
+print(
+    "Find all the units that have less than 5 contact hours in total (summing all different types of contact hours)"
+)
 for r in graph.query(
-    f"""
+    """
     PREFIX handbook: <https://handbooks.uwa.edu.au/>
     SELECT ?unit
-    WHERE {{
+    WHERE {
         ?unit rdf:type handbook:Unit ;
               handbook:HasContactHour / handbook:HasHours ?hours
-    }}
+    }
     GROUP BY ?unit
     HAVING (SUM(?hours) < 5)
     """
 ):
     print(r.unit)
 
-print("Rank the majors in the order of least number of contact hours that are not field trips")
-for r in graph.query(
+print(
+    "Rank the majors in the order of least number of contact hours that are not field trips"
+)
+for major, total_hours in graph.query(
     """
     PREFIX handbook: <https://handbooks.uwa.edu.au/>
     SELECT ?major (SUM(?hours) as ?total_hours)
@@ -127,22 +130,22 @@ for r in graph.query(
     ORDER BY DESC(SUM(?hours))
     """
 ):
-    print(r.major, r.total_hours)
-    
-print("Which majors can I transfer to from my current completed major so that I only have to take no more than 5 more units")
+    print(f"{major}: {total_hours} hours")
+
+print(
+    "Which majors can I transfer to from my current completed major so that I only have to take no more than 5 more units"
+)
+query = input("What's your current major? ")
 for r in graph.query(
-    """
+    f"""
     PREFIX handbook: <https://handbooks.uwa.edu.au/>
     SELECT ?major
-    WHERE {
-        ?major handbook:HasUnit / handbook:HasContactHour ?contact_hour .
-        FILTER NOT EXISTS {
-            ?contact_hour rdf:type handbook:FieldTrip .
-        }
-        ?contact_hour handbook:HasHours ?hours .
-    }
-    GROUP BY ?major
-    ORDER BY DESC(SUM(?hours))
+    WHERE {{
+        ?major rdf:type handbook:Major ;
+               handbook:HasCode ?major_code ;
+               handbook:HasUnit ?unit .
+        FILTER (!CONTAINS(?major_code, "{major_code}")) .
+    }}
     """
 ):
-    print(r.major, r.total_hours)
+    print(r.major)
