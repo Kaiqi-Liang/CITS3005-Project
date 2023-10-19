@@ -132,20 +132,75 @@ for major, total_hours in graph.query(
 ):
     print(f"{major}: {total_hours} hours")
 
-print(
-    "Which majors can I transfer to from my current completed major so that I only have to take no more than 5 more units"
-)
-query = input("What's your current major? ")
+print("Which majors don't have any participation or practical assessments")
 for r in graph.query(
-    f"""
+    """
     PREFIX handbook: <https://handbooks.uwa.edu.au/>
-    SELECT ?major
-    WHERE {{
-        ?major rdf:type handbook:Major ;
-               handbook:HasCode ?major_code ;
-               handbook:HasUnit ?unit .
-        FILTER (!CONTAINS(?major_code, "{major_code}")) .
-    }}
+    SELECT DISTINCT ?major
+    WHERE {
+        ?major rdf:type handbook:Major .
+        FILTER NOT EXISTS {
+            ?major handbook:HasUnit ?unit .
+            ?unit rdf:type handbook:Unit ;
+                  handbook:HasAssessment ?assessment .
+            ?assessment rdf:type handbook:Practical .
+        }
+        FILTER NOT EXISTS {
+            ?major handbook:HasUnit ?unit .
+            ?unit rdf:type handbook:Unit ;
+                  handbook:HasAssessment ?assessment .
+            ?assessment rdf:type handbook:Participation .
+        }
+    }
     """
 ):
     print(r.major)
+print()
+
+print(
+    "Which majors can I transfer to from my current completed major so that I only have to take no more than 5 more units"
+)
+major_code = input("What's your current major? ")
+for major in graph.query(
+    """
+    PREFIX handbook: <https://handbooks.uwa.edu.au/>
+    SELECT ?major
+    WHERE {
+        ?major rdf:type handbook:Major .
+    }
+"""
+):
+    code = major.major.split("=")[-1]
+    if code == major_code:
+        continue
+    result = graph.query(
+        f"""
+        PREFIX handbook: <https://handbooks.uwa.edu.au/>
+        SELECT (COUNT(?unit) as ?total)
+        WHERE {{
+            {{
+                SELECT ?unit
+                WHERE {{
+                    ?major rdf:type handbook:Major ;
+                           handbook:HasCode ?major_code ;
+                           handbook:HasUnit ?unit .
+                    FILTER (CONTAINS(?major_code, "{code}")) .
+                }}
+            }}
+            MINUS
+            {{
+                SELECT ?unit
+                where {{
+                    ?major rdf:type handbook:Major ;
+                       handbook:HasCode ?major_code ;
+                       handbook:HasUnit ?unit .
+                    FILTER (CONTAINS(?major_code, "{major_code}")) .
+                }}
+            }}
+        }}
+        """
+    )
+    if list(result)[0].total.toPython() > 5:
+        continue
+    print(code)
+    print()

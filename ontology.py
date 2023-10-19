@@ -118,9 +118,8 @@ with onto:
         domain = [Unit, Major]
         range = [str]
 
-    class IsDeliveryMode(ObjectProperty, FunctionalProperty):
-        domain = [Unit]
-        range = [DeliveryMode]
+    class IsDeliveryMode(Unit >> DeliveryMode, FunctionalProperty):
+        pass
 
     class UnitDisjunct(Thing):
         pass
@@ -193,23 +192,18 @@ with onto:
                     assessments.append(Exam())
                 elif "test" in ast or "quiz" in ast or re.match("mid[- ]sem", ast):
                     assessments.append(Test())
-                elif (
-                    "report" in ast
-                    or "portfolio" in ast
-                    or "project" in ast
-                    or "assignment" in ast
+                elif any(
+                    search_term in ast
+                    for search_term in ["report", "portfolio", "project", "assignment"]
                 ):
                     assessments.append(Assignment())
                 elif "presentation" in ast or "oral" in ast:
                     assessments.append(Presentation())
                 elif "participation" in ast:
                     assessments.append(Participation())
-                elif (
-                    "practical" in ast
-                    or "trip" in ast
-                    or "site" in ast
-                    or "visit" in ast
-                    or "lab" in ast
+                elif any(
+                    search_term in ast
+                    for search_term in ["prac", "trip", "site", "visit", "lab"]
                 ):
                     assessments.append(Practical())
                 else:
