@@ -26,7 +26,7 @@ for r in graph.query(
     WHERE {
         ?unit rdf:type handbook:Unit ;
               handbook:IsLevel ?level .
-        ?level rdf:type handbook:Level3 .
+        FILTER(?level = 3) .
 
         FILTER NOT EXISTS {
             ?unit handbook:HasAssessment ?assessment .
@@ -34,7 +34,7 @@ for r in graph.query(
         }
 
         FILTER NOT EXISTS {
-            ?unit handbook:HasPrerequisites / handbook:UnitDisjuntContains / handbook:HasAssessment / rdf:type handbook:Exam .
+            ?unit handbook:HasPrerequisites / handbook:UnitDisjunctContains / handbook:HasAssessment / rdf:type handbook:Exam .
         }
     }
     """
@@ -74,6 +74,7 @@ for r in graph.query(
     """
 ):
     print(r.unit)
+print()
 
 print("Find all the units outside of my major that have a certain prerequisite")
 major_code = input("What's your major code? ")
@@ -88,12 +89,13 @@ for r in graph.query(
                handbook:HasUnit ?unit .
         FILTER (!CONTAINS(?major_code, "{major_code}")) .
 
-        ?unit handbook:HasPrerequisites /  handbook:UnitDisjuntContains / handbook:HasCode ?unit_code .
+        ?unit handbook:HasPrerequisites / handbook:UnitDisjunctContains / handbook:HasCode ?unit_code .
         FILTER (CONTAINS(?unit_code, "{unit_code}")) .
     }}
     """
 ):
     print(r.unit)
+print()
 
 print(
     "Find all the units that have less than 5 contact hours in total (summing all different types of contact hours)"
@@ -111,6 +113,7 @@ for r in graph.query(
     """
 ):
     print(r.unit)
+print()
 
 print(
     "Rank the majors in the order of least number of contact hours that are not field trips"
@@ -131,6 +134,7 @@ for major, total_hours in graph.query(
     """
 ):
     print(f"{major}: {total_hours} hours")
+print()
 
 print("Which majors don't have any participation or practical assessments")
 for r in graph.query(

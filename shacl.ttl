@@ -1,0 +1,77 @@
+@prefix sh: <http://www.w3.org/ns/shacl#> .
+@prefix xsd: <http://www.w3.org/2001/XMLSchema#> .
+@prefix handbook: <https://handbooks.uwa.edu.au/> .
+
+handbook:MajorShape a sh:NodeShape ;
+    sh:targetClass handbook:Major ;
+    sh:property [
+        sh:path handbook:HasUnit ;
+        sh:minCount 1 ;
+    ] ;
+    sh:property [
+        sh:path handbook:HasCode ;
+        sh:minCount 1 ;
+        sh:maxCount 1 ;
+    ] ;
+    sh:property [
+        sh:path handbook:HasTitle ;
+        sh:minCount 1 ;
+        sh:maxCount 1 ;
+    ] ;
+    sh:sparql [
+        a sh:SPARQLConstraint ;
+       sh:severity sh:Violation ;
+        sh:message "No major should require more than 40 contact hours per week" ;
+        sh:select """
+            PREFIX handbook: <https://handbooks.uwa.edu.au/>
+            SELECT $this
+            WHERE {
+                $this handbook:HasUnit ?unit .
+                ?unit handbook:HasContactHour / handbook:HasHours ?hours .
+                ?unit handbook:IsLevel ?level .
+            }
+            GROUP BY $this ?level
+            HAVING (SUM(?hours) > 80)
+        """ ;
+    ] .
+
+handbook:UnitShape a sh:NodeShape ;
+    sh:targetClass handbook:Unit ;
+    sh:property [
+        sh:path handbook:HasCode ;
+        sh:minCount 1 ;
+        sh:maxCount 1 ;
+    ] ;
+    sh:property [
+        sh:path handbook:HasTitle ;
+        sh:minCount 1 ;
+        sh:maxCount 1 ;
+    ] ;
+    sh:sparql [
+        a sh:SPARQLConstraint ;
+        sh:severity sh:Violation ;
+        sh:message "Every prerequisite for a level X unit should have a level less than X" ;
+        sh:select """
+            PREFIX handbook: <https://handbooks.uwa.edu.au/>
+            SELECT $this
+            WHERE {
+                $this handbook:HasPrerequisites / handbook:UnitDisjunctContains / handbook:IsLevel ?pre_level .
+                $this handbook:IsLevel ?level .
+                FILTER (?level < ?pre_level) .
+            }
+        """ ;
+    ] ;
+    sh:sparql [
+        a sh:SPARQLConstraint ;
+        sh:severity sh:Violation ;
+        sh:message "No unit should be its own prerequisite" ;
+        sh:select """
+            PREFIX handbook: <https://handbooks.uwa.edu.au/>
+            SELECT $this
+            WHERE {
+                $this handbook:HasPrerequisites / handbook:UnitDisjunctContains / handbook:HasCode ?pre_code .
+                $this handbook:HasCode ?code .
+                FILTER (?code = ?pre_code) .
+            }
+        """ ;
+    ] .

@@ -74,28 +74,7 @@ with onto:
     class HasHours(ContactHour >> int, FunctionalProperty):
         pass
 
-    class Level(Thing):
-        pass
-
-    class Level1(Level):
-        pass
-
-    class Level2(Level):
-        pass
-
-    class Level3(Level):
-        pass
-
-    class Level4(Level):
-        pass
-
-    class Level5(Level):
-        pass
-
-    class Level6(Level):
-        pass
-
-    class IsLevel(Unit >> Level, FunctionalProperty):
+    class IsLevel(Unit >> int, FunctionalProperty):
         pass
 
     class DeliveryMode(Thing):
@@ -124,7 +103,7 @@ with onto:
     class UnitDisjunct(Thing):
         pass
 
-    class UnitDisjuntContains(UnitDisjunct >> Unit):
+    class UnitDisjunctContains(UnitDisjunct >> Unit):
         pass
 
     class HasPrerequisites(ObjectProperty):
@@ -135,40 +114,17 @@ with onto:
         domain = [Unit, Major]
         range = [str]
 
-    class HasOutcome(Unit >> str):
-        pass
-
-    # Reuse the nodes for level
-    level1 = Level1("level1")
-    level2 = Level2("level2")
-    level3 = Level3("level3")
-    level4 = Level4("level4")
-    level5 = Level5("level5")
-    level6 = Level6("level6")
+    class HasOutcome(DataProperty):
+        domain = [Unit, Major]
+        range = [str]
 
     with open("units.json", "r") as units, open("majors.json", "r") as majors:
-        for unit in json.load(units).values():
+        units_json = json.load(units)
+        for unit in units_json.values():
             code = unit["code"].strip()
             unit_instance = Unit(f"unitdetails?code={code}")
             unit_instance.HasCode = code
-
-            # Assign level for unit
-            match int(unit["level"].strip()):
-                case 1:
-                    unit_instance.IsLevel = level1
-                case 2:
-                    unit_instance.IsLevel = level2
-                case 3:
-                    unit_instance.IsLevel = level3
-                case 4:
-                    unit_instance.IsLevel = level4
-                case 5:
-                    unit_instance.IsLevel = level5
-                case 6:
-                    unit_instance.IsLevel = level6
-                case other:
-                    raise ValueError("Level does not exist")
-
+            unit_instance.IsLevel = int(unit["level"].strip())
             unit_instance.HasTitle = unit["title"].strip()
             unit_instance.HasDescription = unit["description"].strip()
 
@@ -251,9 +207,11 @@ with onto:
                     units_contained = []
                     unit_disjunct = UnitDisjunct()
                     for prereq in unitset:
-                        unit = Unit(f"unitdetails?code={prereq}")
-                        units_contained.append(unit)
-                    unit_disjunct.UnitDisjuntContains = units_contained
+                        if prereq in units_json:
+                            # if a prereq is a unit that does not exist do not add it
+                            unit = Unit(f"unitdetails?code={prereq}")
+                            units_contained.append(unit)
+                    unit_disjunct.UnitDisjunctContains = units_contained
                     unit_disjuncts.append(unit_disjunct)
                 unit_instance.HasPrerequisites = unit_disjuncts
 
@@ -276,5 +234,6 @@ with onto:
                 for unit_code in major["units"]
             ]
 
-onto.save(file="handbook.xml", format="rdfxml")
 graph = default_world.as_rdflib_graph()
+if __name__ == "__main__":
+    onto.save(file="handbook.xml", format="rdfxml")
