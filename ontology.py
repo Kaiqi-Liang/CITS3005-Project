@@ -1,6 +1,8 @@
 import json
 import re
 from owlready2 import *
+from rdflib import Graph
+from pyshacl import validate
 
 onto = get_ontology("https://handbooks.uwa.edu.au/")
 with onto:
@@ -262,10 +264,11 @@ with onto:
                     for unit_code in major["bridging"] if unit_code in units_json
                 ]
 
+print(validate(default_world.as_rdflib_graph(), shacl_graph=Graph().parse("shacl.ttl"))[2])
+try:
+    sync_reasoner_pellet(infer_property_values=True, infer_data_property_values=True)
+except OwlReadyInconsistentOntologyError as e:
+    print(e)
 graph = default_world.as_rdflib_graph()
-if __name__ == "__main__":
-    try:
-        sync_reasoner_pellet(infer_property_values=True, infer_data_property_values=True)
-    except OwlReadyInconsistentOntologyError as e:
-        print(e)
-    onto.save(file="handbook.xml", format="rdfxml")
+if __name__ == '__main__':
+    onto.save("handbook.xml")

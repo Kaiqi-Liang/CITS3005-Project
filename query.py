@@ -1,6 +1,6 @@
 from ontology import graph
 
-print("Find all units with more than 6 outcomes")
+print("Find all units with more than 20 outcomes")
 for r in graph.query(
     """
     PREFIX handbook: <https://handbooks.uwa.edu.au/>
@@ -10,7 +10,7 @@ for r in graph.query(
               handbook:HasOutcome ?outcome .
     }
     GROUP BY ?unit
-    HAVING (COUNT(?outcome) > 6)
+    HAVING (COUNT(?outcome) > 20)
     """
 ):
     print(r.unit)
@@ -42,7 +42,7 @@ for r in graph.query(
     print(r.unit)
 print()
 
-print("Find all units that appear in more than 3 majors.")
+print("Find all units that appear in more than 5 majors.")
 for r in graph.query(
     """
     PREFIX handbook: <https://handbooks.uwa.edu.au/>
@@ -53,7 +53,7 @@ for r in graph.query(
                rdf:type handbook:Major .
     }
     GROUP BY ?unit
-    HAVING (COUNT(?major) > 3)
+    HAVING (COUNT(?major) > 5)
     """
 ):
     print(r.unit)
@@ -98,7 +98,7 @@ for r in graph.query(
 print()
 
 print(
-    "Find all the units that have less than 5 contact hours in total (summing all different types of contact hours)"
+    "Find all the units that have less than 2 contact hours in total (summing all different types of contact hours)"
 )
 for r in graph.query(
     """
@@ -109,7 +109,7 @@ for r in graph.query(
               handbook:HasContactHour / handbook:HasHours ?hours
     }
     GROUP BY ?unit
-    HAVING (SUM(?hours) < 5)
+    HAVING (SUM(?hours) < 2)
     """
 ):
     print(r.unit)
@@ -130,26 +130,26 @@ for major, total_hours in graph.query(
         ?contact_hour handbook:HasHours ?hours .
     }
     GROUP BY ?major
-    ORDER BY DESC(SUM(?hours))
+    ORDER BY SUM(?hours)
     """
 ):
     print(f"{major}: {total_hours} hours")
 print()
 
-print("Which majors don't have any participation or practical assessments")
+print("Which majors don't have any participation or test assessments")
 for r in graph.query(
     """
     PREFIX handbook: <https://handbooks.uwa.edu.au/>
     SELECT DISTINCT ?major
     WHERE {
         ?major rdf:type handbook:Major .
-        FILTER NOT EXISTS {
+        MINUS {
             ?major handbook:HasUnit ?unit .
             ?unit rdf:type handbook:Unit ;
                   handbook:HasAssessment ?assessment .
-            ?assessment rdf:type handbook:Practical .
+            ?assessment rdf:type handbook:Test .
         }
-        FILTER NOT EXISTS {
+        MINUS {
             ?major handbook:HasUnit ?unit .
             ?unit rdf:type handbook:Unit ;
                   handbook:HasAssessment ?assessment .
