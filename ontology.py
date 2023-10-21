@@ -11,6 +11,8 @@ with onto:
     class Major(Thing):
         pass
 
+    AllDisjoint([Unit, Major])
+
     class HasUnit(Major >> Unit):
         pass
 
@@ -90,11 +92,11 @@ with onto:
         pass
 
     class HasCode(DataProperty, FunctionalProperty):
-        domain = [Unit, Major]
+        domain = [Major | Unit]
         range = [str]
 
     class HasTitle(DataProperty, FunctionalProperty):
-        domain = [Unit, Major]
+        domain = [Major | Unit]
         range = [str]
 
     class IsDeliveryMode(Unit >> DeliveryMode, FunctionalProperty):
@@ -106,17 +108,22 @@ with onto:
     class UnitDisjunctContains(UnitDisjunct >> Unit):
         pass
 
-    class HasPrerequisites(ObjectProperty):
-        domain = [Unit, Major]
-        range = [UnitDisjunct]
+    class HasPrerequisites(Unit >> UnitDisjunct):
+        pass
 
     class HasDescription(DataProperty, FunctionalProperty):
-        domain = [Unit, Major]
+        domain = [Unit | Major]
         range = [str]
 
-    class HasOutcome(DataProperty):
-        domain = [Unit, Major]
+    class HasOutcome(DataProperty, TransitiveProperty):
+        domain = [Unit | Major]
         range = [str]
+
+    class HasRequiredText(Unit >> str, TransitiveProperty):
+        pass
+
+    class HasBridging(Major >> Unit):
+        pass
 
     with open("units.json", "r") as units, open("majors.json", "r") as majors:
         units_json = json.load(units)
@@ -205,15 +212,23 @@ with onto:
                 unit_disjuncts = []
                 for unitset in unit["prerequisites_cnf"]:
                     units_contained = []
-                    unit_disjunct = UnitDisjunct()
                     for prereq in unitset:
                         if prereq in units_json:
                             # if a prereq is a unit that does not exist do not add it
                             unit = Unit(f"unitdetails?code={prereq}")
                             units_contained.append(unit)
-                    unit_disjunct.UnitDisjunctContains = units_contained
-                    unit_disjuncts.append(unit_disjunct)
-                unit_instance.HasPrerequisites = unit_disjuncts
+                    if len(units_contained) > 0:
+                        # if none of the units exist do not create an empty unitset
+                        unit_disjunct = UnitDisjunct()
+                        unit_disjunct.UnitDisjunctContains = units_contained
+                        unit_disjuncts.append(unit_disjunct)
+                if len(unit_disjuncts) > 0:
+                    unit_instance.HasPrerequisites = unit_disjuncts
+
+            if "text" in units:
+                unit_instance.HasRequiredText = [
+                    text.strip() for text in unit["text"]
+                ]
 
         for major in json.load(majors).values():
             code = major["code"].strip()
@@ -224,16 +239,26 @@ with onto:
             major_instance.HasDescription = major["description"].strip()
             major_instance.HasSchool = major["school"].strip()
 
+            major_instance.HasUnit = [
+                Unit(f"unitdetails?code={unit_code.strip()}")
+                for unit_code in major["units"] if unit_code in units_json
+            ]
+
             if "outcomes" in major:
                 major_instance.HasOutcome = [
                     outcome.strip() for outcome in major["outcomes"]
                 ]
 
-            major_instance.HasUnit = [
-                Unit(f"unitdetails?code={unit_code.strip()}")
-                for unit_code in major["units"]
-            ]
+            if "bridging" in major:
+                major_instance.HasBridging = [
+                    Unit(f"unitdetails?code={unit_code.strip()}")
+                    for unit_code in major["bridging"] if unit_code in units_json
+                ]
 
 graph = default_world.as_rdflib_graph()
 if __name__ == "__main__":
+    try:
+        sync_reasoner()
+    except OwlReadyInconsistentOntologyError as e:
+        print(e)
     onto.save(file="handbook.xml", format="rdfxml")

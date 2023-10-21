@@ -7,6 +7,7 @@ handbook:MajorShape a sh:NodeShape ;
     sh:property [
         sh:path handbook:HasUnit ;
         sh:minCount 1 ;
+        sh:maxCount 24 ;
     ] ;
     sh:property [
         sh:path handbook:HasCode ;
@@ -18,10 +19,15 @@ handbook:MajorShape a sh:NodeShape ;
         sh:minCount 1 ;
         sh:maxCount 1 ;
     ] ;
+    sh:property [
+        sh:path handbook:HasSchool ;
+        sh:minCount 1 ;
+        sh:maxCount 1 ;
+    ] ;
     sh:sparql [
         a sh:SPARQLConstraint ;
-       sh:severity sh:Violation ;
-        sh:message "No major should require more than 40 contact hours per week" ;
+        sh:severity sh:Violation ;
+        sh:message "No major should require more than 80 contact hours for the same level of units" ;
         sh:select """
             PREFIX handbook: <https://handbooks.uwa.edu.au/>
             SELECT $this
@@ -32,6 +38,20 @@ handbook:MajorShape a sh:NodeShape ;
             }
             GROUP BY $this ?level
             HAVING (SUM(?hours) > 80)
+        """ ;
+    ] ;
+    sh:sparql [
+        a sh:SPARQLConstraint ;
+        sh:severity sh:Violation ;
+        sh:message "A unit in a major cannot be a bridging unit for the same major" ;
+        sh:select """
+            PREFIX handbook: <https://handbooks.uwa.edu.au/>
+            SELECT $this
+            WHERE {
+                $this handbook:HasUnit ?unit .
+                $this handbook:HasBridging ?bridging_unit .
+                FILTER (?unit = ?bridging_unit) .
+            }
         """ ;
     ] .
 
@@ -46,6 +66,15 @@ handbook:UnitShape a sh:NodeShape ;
         sh:path handbook:HasTitle ;
         sh:minCount 1 ;
         sh:maxCount 1 ;
+    ] ;
+    sh:property [
+        sh:path handbook:IsLevel ;
+        sh:minCount 1 ;
+        sh:maxCount 1 ;
+    ] ;
+    sh:property [
+        sh:path handbook:HasOutcome ;
+        sh:maxCount 10 ;
     ] ;
     sh:sparql [
         a sh:SPARQLConstraint ;
@@ -74,4 +103,34 @@ handbook:UnitShape a sh:NodeShape ;
                 FILTER (?code = ?pre_code) .
             }
         """ ;
+    ] ;
+    sh:sparql [
+        a sh:SPARQLConstraint ;
+        sh:severity sh:Violation ;
+        sh:message "The level of a unit should be the 5th character of the unit code" ;
+        sh:select """
+            PREFIX handbook: <https://handbooks.uwa.edu.au/>
+            SELECT $this
+            WHERE {
+                $this handbook:IsLevel ?level  .
+                $this handbook:HasCode ?code .
+                FILTER (SUBSTR(str(?code), 5, 1) != str(?level)) .
+            }
+        """ ;
+    ] .
+
+handbook:ContactHour a sh:NodeShape ;
+    sh:targetClass handbook:ContactHour ;
+    sh:property [
+        sh:path handbook:HasHours ;
+        sh:minCount 1 ;
+        sh:maxCount 1 ;
+        sh:minInclusive 1 ;
+    ] .
+
+handbook:UnitDisjunct a sh:NodeShape ;
+    sh:targetClass handbook:UnitDisjunct ;
+    sh:property [
+        sh:path handbook:UnitDisjunctContains ;
+        sh:minCount 1 ;
     ] .

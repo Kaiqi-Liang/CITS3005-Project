@@ -30,3 +30,27 @@
 **Potential issues:**
 - grouping of 'Lectures and practical hours' or 'lectures/computer labs' in many units
 - contact hours that are not weekly - e.g., fieldtrips show as "1" but are really 1 x 2 Saturdays
+
+## Constraints for SHACL
+
+### Required
+
+- Every prerequisite for a level X unit should have a level less than or equal to X
+- No unit should be its own prerequisite
+- No major should require more than 80 contact hours for the same level of units
+
+### Additional
+
+- The level of a unit should be the 5th character of the unit code
+- A unit in a major cannot be a bridging unit for the same major
+- Major has at least 1 units
+- Major and units has exactly 1 code and name
+- A major cannot contain more than 24 units
+- A unit cannot cannot have more than 10 outcomes
+- A contact hour must have one outgoing link to a positive integer
+
+### Design decisions
+
+- Not include prerequisites not in json to avoid empty units
+- Not include prerequisites for major because it is just raw text
+- Prerequisite level <= instead of < because of some units can have a prerequisite of the same level
