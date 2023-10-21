@@ -7,7 +7,7 @@ handbook:MajorShape a sh:NodeShape ;
     sh:property [
         sh:path handbook:HasUnit ;
         sh:minCount 1 ;
-        sh:maxCount 24 ;
+        sh:maxCount 58 ;
     ] ;
     sh:property [
         sh:path handbook:HasCode ;
@@ -74,19 +74,19 @@ handbook:UnitShape a sh:NodeShape ;
     ] ;
     sh:property [
         sh:path handbook:HasOutcome ;
-        sh:maxCount 10 ;
+        sh:maxCount 39 ;
     ] ;
     sh:sparql [
         a sh:SPARQLConstraint ;
         sh:severity sh:Violation ;
-        sh:message "Every prerequisite for a level X unit should have a level less than X" ;
+        sh:message "Every prerequisite for a level X unit should not have a level higher than X" ;
         sh:select """
             PREFIX handbook: <https://handbooks.uwa.edu.au/>
             SELECT $this
             WHERE {
                 $this handbook:HasPrerequisites / handbook:UnitDisjunctContains / handbook:IsLevel ?pre_level .
                 $this handbook:IsLevel ?level .
-                FILTER (?level < ?pre_level) .
+                FILTER (?pre_level > ?level) .
             }
         """ ;
     ] ;

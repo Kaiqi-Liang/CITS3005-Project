@@ -35,7 +35,7 @@
 
 ### Required
 
-- Every prerequisite for a level X unit should have a level less than or equal to X
+- Every prerequisite for a level X unit should not have a level higher than X
 - No unit should be its own prerequisite
 - No major should require more than 80 contact hours for the same level of units
 
@@ -45,8 +45,18 @@
 - A unit in a major cannot be a bridging unit for the same major
 - Major has at least 1 units
 - Major and units has exactly 1 code and name
-- A major cannot contain more than 24 units
-- A unit cannot cannot have more than 10 outcomes
+- A major cannot contain more than 58 units (MJD-MUSDM has the most units), found by running
+
+```python
+max([len(major["units"]) for major in majors_json.values()])
+```
+
+- A unit cannot cannot have more than 26 outcomes (MJD-DENTS has the most outcomes), found by running
+
+```python
+max([len(unit["outcomes"]) for unit in units_json.values() if "outcomes" in unit])
+```
+
 - A contact hour must have one outgoing link to a positive integer
 
 ### Design decisions

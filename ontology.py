@@ -115,15 +115,21 @@ with onto:
         domain = [Unit | Major]
         range = [str]
 
-    class HasOutcome(DataProperty, TransitiveProperty):
+    class HasOutcome(DataProperty):
         domain = [Unit | Major]
         range = [str]
 
-    class HasRequiredText(Unit >> str, TransitiveProperty):
-        pass
+    class HasRequiredText(DataProperty):
+        domain = [Unit | Major]
+        range = [str]
 
     class HasBridging(Major >> Unit):
         pass
+
+    imp = Imp()
+    imp.set_as_rule("Major(?m), HasUnit(?m, ?u), HasOutcome(?u, ?o) -> HasOutcome(?m, ?o)")
+    imp.set_as_rule("Major(?m), HasUnit(?m, ?u), HasRequiredText(?u, ?t) -> HasRequiredText(?m, ?t)")
+    imp.set_as_rule("Unit(?u), HasPrerequisites(?u, ?d1), UnitDisjunctContains(?d1, ?p1), HasPrerequisites(?p1, ?d2), UnitDisjunctContains(?d2, ?p2) -> UnitDisjunctContains(?d1, ?p2)")
 
     with open("units.json", "r") as units, open("majors.json", "r") as majors:
         units_json = json.load(units)
@@ -177,6 +183,8 @@ with onto:
             if "contact" in unit:
                 for cnt in unit["contact"]:
                     hours = int(unit["contact"][cnt].strip())
+                    if hours == 0: # in case of the crawler failed to get a positive number of hours
+                        continue
                     cnt = cnt.lower()
                     if "lec" in cnt:
                         lecture = Lecture()
@@ -215,8 +223,7 @@ with onto:
                     for prereq in unitset:
                         if prereq in units_json:
                             # if a prereq is a unit that does not exist do not add it
-                            unit = Unit(f"unitdetails?code={prereq}")
-                            units_contained.append(unit)
+                            units_contained.append(Unit(f"unitdetails?code={prereq}"))
                     if len(units_contained) > 0:
                         # if none of the units exist do not create an empty unitset
                         unit_disjunct = UnitDisjunct()
@@ -225,7 +232,7 @@ with onto:
                 if len(unit_disjuncts) > 0:
                     unit_instance.HasPrerequisites = unit_disjuncts
 
-            if "text" in units:
+            if "text" in unit:
                 unit_instance.HasRequiredText = [
                     text.strip() for text in unit["text"]
                 ]
@@ -258,7 +265,7 @@ with onto:
 graph = default_world.as_rdflib_graph()
 if __name__ == "__main__":
     try:
-        sync_reasoner()
+        sync_reasoner_pellet(infer_property_values=True, infer_data_property_values=True)
     except OwlReadyInconsistentOntologyError as e:
         print(e)
     onto.save(file="handbook.xml", format="rdfxml")
