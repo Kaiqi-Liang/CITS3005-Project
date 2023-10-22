@@ -33,28 +33,35 @@ conda activate kr
 python server.py
 ```
 
-After roughly 5 seconds it will output a lot of relations the `Pellet` reasoner inserted, then it will print out the server is running on a URL, this URL must be the same as the `SERVER_URL` defined in the first line of the [JavaScript file](index.js), by default it will be `http://127.0.0.1:5000`. Once this is all set up open the [HTML file](index.html) in your browser.
+After about 5 seconds it will output a lot of relations the `Pellet` reasoner inserted, then it will print out the server is running on a URL, this URL must be the same as the `SERVER_URL` defined in the first line of the [JavaScript file](index.js), by default it will be `http://127.0.0.1:5000`. Once this is all set up open the [HTML file](index.html) in your browser.
 
 ```bash
 open index.html
 ```
 
+## User Interface
+
+The user interface allows you to run 8 builtin [`SPARQL` queries](#sparql-queries) and validate `SHACL` constraint as well as any general query that you can come up with. Each query has 1 or 2 parameters you can set, if you don't enter anything the default values will be used which can be found on the instructions table in the user interface.
+
+If you run the same query with the same parameters multiple times it will be much faster after the first time as the results are cached in the backend, this includes the `SHACL` constraint validation as the first time will take a really long time.
+
+If the query returns no result it will show a message saying 'No matching result for the query', but if the server encountered any error at all it will simply say 'Something went wrong'.
+
 ## SPARQL Queries
 
 ### Basic
 
-- Find all units with more than 6 outcomes
-- Find all level 3 units that do not have an exam, and where none of their prerequisites have an exam.
-- Find all units that appear in more than 3 majors.
+- Find units with more than 6 outcomes
+- Find level 3 units that do not have an exam, and where none of their prerequisites have an exam.
+- Find units that appear in more than 3 majors.
 - Basic search functionality: Given a query string (eg "environmental policy"), can you find the units that contain this string in the description or outcomes?
 
 ### Extra
 
 Some of these queries might take a up to minutes to complete depending on your hardware
 
-- Find all the units outside of my major that have a certain prerequisite
-- Find all the units that have less than 2 contact hours in total (summing all different types of contact hours)
-- Rank the majors in the order of least number of contact hours that are not field trips
+- Find the units outside of my major that have a certain prerequisite
+- Find the majors that have less than 2 contact hours in total that are not field trips(summing all different types of contact hours)
 - Which majors don't have any participation or test assessments
 - Which majors can I transfer to from my current completed major so that I only have to take no more than 5 more units
 

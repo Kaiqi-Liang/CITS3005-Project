@@ -109,7 +109,7 @@ form.addEventListener('submit', async (event) => {
 			document.querySelector('img').style.display = 'none';
 			return;
 		case 'other':
-			payload.query = form.input1.value;
+			payload.query = form.input1.value.trim();
 		default:
 			break;
 	}
