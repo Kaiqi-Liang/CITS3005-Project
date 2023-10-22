@@ -1,15 +1,15 @@
 # CITS3005-Project UWA Handbook
 
-## Queries to answer
+## SPARQL Queries
 
-### Basic queries
+### Basic
 
 - Find all units with more than 6 outcomes
 - Find all level 3 units that do not have an exam, and where none of their prerequisites have an exam.
 - Find all units that appear in more than 3 majors.
 - Basic search functionality: Given a query string (eg "environmental policy"), can you find the units that contain this string in the description or outcomes?
 
-### Additional queries
+### Extra
 
 Some of these queries might take a up to minutes to complete depending on your hardware
 
@@ -19,21 +19,7 @@ Some of these queries might take a up to minutes to complete depending on your h
 - Which majors don't have any participation or test assessments
 - Which majors can I transfer to from my current completed major so that I only have to take no more than 5 more units
 
-## Categorisation
-
-### Contact
-
-- Lecture: "lecture"
-- Practical classes: "practical"
-- Tutorial
-- Workshops: "seminar" "studio"
-- Fieldtrip: "site visit"
-- Labs
-**Potential issues:**
-- grouping of 'Lectures and practical hours' or 'lectures/computer labs' in many units
-- contact hours that are not weekly - e.g., fieldtrips show as "1" but are really 1 x 2 Saturdays
-
-## Constraints for SHACL
+## SHACL Constraints
 
 ### Required
 

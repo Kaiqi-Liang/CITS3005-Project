@@ -229,10 +229,10 @@ with onto:
                     units_contained = []
                     for prereq in unitset:
                         if prereq in units_json:
-                            # if a prereq is a unit that does not exist do not add it
+                            # if a prerequisite is a unit that does not exist do not add it
                             units_contained.append(Unit(f"unitdetails?code={prereq}"))
                     if len(units_contained) > 0:
-                        # if none of the units exist do not create an empty unitset
+                        # if none of the units exist do not create an empty unitset disjunct
                         unit_disjunct = UnitDisjunct()
                         unit_disjunct.UnitDisjunctContains = units_contained
                         unit_disjuncts.append(unit_disjunct)
