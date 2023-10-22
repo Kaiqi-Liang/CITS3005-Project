@@ -20,6 +20,9 @@ with onto:
     class HasSchool(Major >> str, FunctionalProperty):
         pass
 
+    class HasBridging(Major >> Unit):
+        pass
+
     class Assessment(Thing):
         pass
 
@@ -92,14 +95,6 @@ with onto:
     class Hybrid(DeliveryMode):
         pass
 
-    class HasCode(DataProperty, FunctionalProperty):
-        domain = [Major | Unit]
-        range = [str]
-
-    class HasTitle(DataProperty, FunctionalProperty):
-        domain = [Major | Unit]
-        range = [str]
-
     class IsDeliveryMode(Unit >> DeliveryMode, FunctionalProperty):
         pass
 
@@ -112,6 +107,14 @@ with onto:
     class HasPrerequisites(Unit >> UnitDisjunct):
         pass
 
+    class HasCode(DataProperty, FunctionalProperty):
+        domain = [Unit | Major]
+        range = [str]
+
+    class HasTitle(DataProperty, FunctionalProperty):
+        domain = [Unit | Major]
+        range = [str]
+
     class HasDescription(DataProperty, FunctionalProperty):
         domain = [Unit | Major]
         range = [str]
@@ -123,9 +126,6 @@ with onto:
     class HasRequiredText(DataProperty):
         domain = [Unit | Major]
         range = [str]
-
-    class HasBridging(Major >> Unit):
-        pass
 
     imp = Imp()
     imp.set_as_rule(

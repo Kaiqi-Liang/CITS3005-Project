@@ -127,13 +127,22 @@ form.addEventListener('submit', async (event) => {
 			p.textContent = 'No matching result for the query';
 			document.body.appendChild(p);
 		} else {
-			for (const uri of data) {
+			for (const value of data) {
 				const li = document.createElement('li');
-				const a = document.createElement('a');
-				a.href = uri;
-				a.target = '_blank';
-				a.textContent = uri.split('=')[1];
-				li.appendChild(a);
+				for (const atom of value) {
+					if (atom.includes('=')) {
+						const a = document.createElement('a');
+						a.href = value;
+						a.target = '_blank';
+						a.textContent = atom.split('=')[1];
+						li.appendChild(a);
+					} else {
+						const span = document.createElement('span');
+						span.style.marginLeft = '10px';
+						span.textContent = atom;
+						li.appendChild(span);
+					}
+				}
 				ul.appendChild(li);
 			}
 		}

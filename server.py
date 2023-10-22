@@ -1,5 +1,7 @@
+import os
 import json
 import signal
+import openai
 from flask import Flask, request
 from flask_cors import CORS
 from owlready2 import sync_reasoner_pellet, default_world
@@ -16,6 +18,8 @@ from query import (
     units_with_more_outcomes,
     units_with_no_exam,
 )
+
+openai.api_key = os.getenv("OPENAI_API_KEY")
 
 onto.save("handbook.owl")
 sync_reasoner_pellet(infer_property_values=True, infer_data_property_values=True)
@@ -38,6 +42,7 @@ except FileNotFoundError:
         "query6": {},
         "query7": {},
         "query8": {},
+        "other": {},
     }
 
 
@@ -173,8 +178,91 @@ def shacl():
 
 @app.route("/other", methods=["post"])
 def other():
-    print("Running SPARQL query")
-    return list(graph.query(request.json["query"]))
+    query = request.json["query"]
+    if not query:
+        query = 'Find the majors that are in the school of "Physics, Mathematics and Computing'
+    if query.lower() in cache["other"]:
+        return cache["other"][query.lower()]
+    prompt = """
+    This is the ontology created using `owlready2`
+    ```python
+    class Unit(Thing): pass
+    class Major(Thing): pass
+    AllDisjoint([Unit, Major])
+    class HasUnit(Major >> Unit): pass
+    class HasSchool(Major >> str, FunctionalProperty): pass
+    class HasBridging(Major >> Unit): pass
+    class Assessment(Thing): pass
+    class Exam(Assessment): pass
+    class Test(Assessment): pass
+    class Assignment(Assessment): pass
+    class Presentation(Assessment): pass
+    class Participation(Assessment): pass
+    class Practical(Assessment): pass
+    class OtherAssessment(Assessment): pass
+    class HasAssessment(Unit >> Assessment): pass
+    class ContactHour(Thing): pass
+    class Lecture(ContactHour): pass
+    class Tutorial(ContactHour): pass
+    class Lab(ContactHour): pass
+    class Workshop(ContactHour): pass
+    class FieldTrip(ContactHour): pass
+    class Practice(ContactHour): pass
+    class OtherContactHour(ContactHour): pass
+    class HasContactHour(Unit >> ContactHour): pass
+    class HasHours(ContactHour >> int, FunctionalProperty): pass
+    class IsLevel(Unit >> int, FunctionalProperty): pass
+    class DeliveryMode(Thing): pass
+    class Online(DeliveryMode): pass
+    class Face2Face(DeliveryMode): pass
+    class Hybrid(DeliveryMode): pass
+    class IsDeliveryMode(Unit >> DeliveryMode, FunctionalProperty): pass
+    class UnitDisjunct(Thing): pass
+    class UnitDisjunctContains(UnitDisjunct >> Unit): pass
+    class HasPrerequisites(Unit >> UnitDisjunct): pass
+    class HasCode(DataProperty, FunctionalProperty):
+        domain = [Unit | Major]
+        range = [str]
+    class HasTitle(DataProperty, FunctionalProperty):
+        domain = [Unit | Major]
+        range = [str]
+    class HasDescription(DataProperty, FunctionalProperty):
+        domain = [Unit | Major]
+        range = [str]
+    class HasOutcome(DataProperty):
+        domain = [Unit | Major]
+        range = [str]
+    class HasRequiredText(DataProperty):
+        domain = [Unit | Major]
+        range = [str]
+    ```
+    Assume the namespace is already set to `handbook`, you are a helpful assistant that generates SPARQL queries for a given prompt. Here is a simple example of what I would like you to return given the prompt is to "find the units with more than 6 outcomes", notice that I do not want you to include any code block markdown symbols, just give me the SPARQL query in plain text
+    SELECT ?unit
+    WHERE {
+        ?unit rdf:type handbook:Unit ;
+              handbook:HasOutcome ?outcome .
+    }
+    GROUP BY ?unit
+    HAVING (COUNT(?outcome) > 6)
+    """
+    for choice in openai.ChatCompletion.create(
+        model="gpt-4",
+        messages=[
+            {"role": "system", "content": prompt},
+            {"role": "user", "content": query},
+        ],
+        n=3,
+    )["choices"]:
+        sparql = choice.message.content
+        print(sparql, end="\n\n")
+        try:
+            result = list(graph.query(sparql))
+            if len(result) > 0:
+                cache["other"][query.lower()] = result
+                return result
+        except:
+            continue
+    return []
 
 
 if __name__ == "__main__":

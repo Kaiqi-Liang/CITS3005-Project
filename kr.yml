@@ -1,0 +1,11 @@
+name: kr
+channels:
+  - conda-forge
+dependencies:
+  - python=3.11
+  - owlready2
+  - rdflib
+  - pyshacl
+  - flask
+  - flask_cors
+  - openai
