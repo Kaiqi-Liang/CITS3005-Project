@@ -18,18 +18,16 @@ Then create a new virtual environment called `kr` with all the dependencies inst
 conda env create --file kr.yml
 ```
 
-If it already exists rename the file `kr.yml` to something else that does not exist and run the command again with the new file name.
-
-Put your openAI API key in an environment variable.
-
-```bash
-export OPENAI_API_KEY=openai-api-key
-```
-
-Activate the virtual environment and run the server code.
+If it already exists rename the file `kr.yml` to something else that does not exist and run the command again with the new file name, then the virtual environment.
 
 ```bash
 conda activate kr
+```
+
+Put your openAI API key in an environment variable and run the server code.
+
+```bash
+export OPENAI_API_KEY=openai-api-key
 python server.py
 ```
 
