@@ -152,6 +152,7 @@ def majors_with_less_units(graph, major_code: str, units: int):
     print(
         f"Which majors can I transfer to from my current completed major so that I only have to take no more than {units} more units"
     )
+    majors = []
     for r in graph.query(
         """
         SELECT ?major

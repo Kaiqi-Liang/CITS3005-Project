@@ -122,14 +122,20 @@ form.addEventListener('submit', async (event) => {
 		const data = await res.json();
 		const ul = document.createElement('ul');
 		document.body.appendChild(ul);
-		for (const uri of data) {
-			const li = document.createElement('li');
-			const a = document.createElement('a');
-			a.href = uri;
-			a.target = '_blank';
-			a.textContent = uri.split('=')[1];
-			li.appendChild(a);
-			ul.appendChild(li);
+		if (data.length === 0) {
+			const p = document.createElement('p');
+			p.textContent = 'No matching result for the query';
+			document.body.appendChild(p);
+		} else {
+			for (const uri of data) {
+				const li = document.createElement('li');
+				const a = document.createElement('a');
+				a.href = uri;
+				a.target = '_blank';
+				a.textContent = uri.split('=')[1];
+				li.appendChild(a);
+				ul.appendChild(li);
+			}
 		}
 	} catch (error) {
 		console.warn(error);	
