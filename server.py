@@ -17,7 +17,7 @@ from query import (
     units_with_no_exam,
 )
 
-onto.save("handbook.xml")
+onto.save("handbook.owl")
 sync_reasoner_pellet(infer_property_values=True, infer_data_property_values=True)
 graph = default_world.as_rdflib_graph()
 graph.bind("handbook", NAMESPACE)
@@ -26,7 +26,8 @@ app = Flask(__name__)
 CORS(app)
 
 try:
-    cache = json.load(open("cache.json", "r"))
+    with open("cache.json", "r") as cache_json:
+        cache = json.load(cache_json)
 except FileNotFoundError:
     cache = {
         "query1": {},
@@ -164,7 +165,7 @@ def shacl():
     if "shacl" in cache:
         return cache["shacl"]
     shacl = validate(
-        Graph().parse("handbook.xml"), shacl_graph=Graph().parse("shacl.ttl")
+        Graph().parse("handbook.owl"), shacl_graph=Graph().parse("shacl.ttl")
     )[2]
     cache["shacl"] = shacl
     return shacl

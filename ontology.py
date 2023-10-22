@@ -160,7 +160,6 @@ with onto:
                     outcome.strip() for outcome in unit["outcomes"]
                 ]
 
-            # Cannot reuse the nodes for assessment as a unit might have multiple exams
             assessments = []
             for ast in unit["assessment"]:
                 ast = ast.lower()

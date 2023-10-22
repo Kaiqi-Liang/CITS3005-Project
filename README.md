@@ -43,26 +43,19 @@ Some of these queries might take a up to minutes to complete depending on your h
 
 ### Additional
 
-- The level of a unit should be the 5th character of the unit code
+- A major should have at least 1 units
+- Every major and unit should have exactly 1 code and title
+- A contact hour must have exactly one outgoing link to a positive integer
 - A unit in a major cannot be a bridging unit for the same major
-- Major has at least 1 units
-- Major and units has exactly 1 code and name
+- The level of a unit should be the 5th character of the unit code
 - A major cannot contain more than 58 units ([MJD-MUSDM](https://handbooks.uwa.edu.au/majordetails?code=MJD-MUSDM) has the most units), found by running
 
 ```python
 max([len(major["units"]) for major in majors_json.values()])
 ```
 
-- A unit cannot cannot have more than 39 outcomes ([DENTS5310](https://handbooks.uwa.edu.au/unitdetails?code=DENT5310) has the most outcomes), found by running
+- A unit or a major cannot have more than 39 outcomes ([DENTS5310](https://handbooks.uwa.edu.au/unitdetails?code=DENT5310) has the most outcomes), found by comparing the most outcomes a unit has and the most outcomes a major has
 
 ```python
-max([len(unit["outcomes"]) for unit in units_json.values() if "outcomes" in unit])
+max(max([len(unit["outcomes"]) for unit in units_json.values() if "outcomes" in unit]), max([len(major["outcomes"]) for major in majors_json.values() if "outcomes" in major]))
 ```
-
-- A contact hour must have one outgoing link to a positive integer
-
-### Design decisions
-
-- Not include prerequisites not in json to avoid empty units
-- Not include prerequisites for major because it is just raw text
-- Prerequisite level <= instead of < because of some units can have a prerequisite of the same level

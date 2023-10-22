@@ -24,6 +24,10 @@ handbook:MajorShape a sh:NodeShape ;
         sh:minCount 1 ;
         sh:maxCount 1 ;
     ] ;
+    sh:property [
+        sh:path handbook:HasOutcome ;
+        sh:maxCount 26 ;
+    ] ;
     sh:sparql [
         a sh:SPARQLConstraint ;
         sh:severity sh:Violation ;
