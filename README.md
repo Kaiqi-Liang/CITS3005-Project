@@ -71,17 +71,17 @@ Some of these queries might take a up to minutes to complete depending on your h
 
 ### Required
 
-- Every prerequisite for a level X unit should not have a level higher than X
-- No unit should be its own prerequisite
 - No major should require more than 80 contact hours for the same level of units
+- No unit should be its own prerequisite
+- Every prerequisite for a level X unit should not have a level higher than X
 
 ### Additional
 
+- The level of a unit should be the 5th character of the unit code
+- A unit in a major cannot be a bridging unit for the same major
 - A major should have at least 1 units
 - Every major and unit should have exactly 1 code and title
 - A contact hour must have exactly one outgoing link to a positive integer
-- A unit in a major cannot be a bridging unit for the same major
-- The level of a unit should be the 5th character of the unit code
 - A major cannot contain more than 58 units ([MJD-MUSDM](https://handbooks.uwa.edu.au/majordetails?code=MJD-MUSDM) has the most units), found by running
 
 ```python
