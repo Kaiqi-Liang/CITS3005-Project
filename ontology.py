@@ -1,10 +1,9 @@
 import json
 import re
 from owlready2 import *
-from rdflib import Graph
-from pyshacl import validate
 
-onto = get_ontology("https://handbooks.uwa.edu.au/")
+NAMESPACE = "https://handbooks.uwa.edu.au/"
+onto = get_ontology(NAMESPACE)
 with onto:
 
     class Unit(Thing):
@@ -129,9 +128,15 @@ with onto:
         pass
 
     imp = Imp()
-    imp.set_as_rule("Major(?m), HasUnit(?m, ?u), HasOutcome(?u, ?o) -> HasOutcome(?m, ?o)")
-    imp.set_as_rule("Major(?m), HasUnit(?m, ?u), HasRequiredText(?u, ?t) -> HasRequiredText(?m, ?t)")
-    imp.set_as_rule("Unit(?u), HasPrerequisites(?u, ?d1), UnitDisjunctContains(?d1, ?p1), HasPrerequisites(?p1, ?d2), UnitDisjunctContains(?d2, ?p2) -> UnitDisjunctContains(?d1, ?p2)")
+    imp.set_as_rule(
+        "Major(?m), HasUnit(?m, ?u), HasOutcome(?u, ?o) -> HasOutcome(?m, ?o)"
+    )
+    imp.set_as_rule(
+        "Major(?m), HasUnit(?m, ?u), HasRequiredText(?u, ?t) -> HasRequiredText(?m, ?t)"
+    )
+    imp.set_as_rule(
+        "Unit(?u), HasPrerequisites(?u, ?d1), UnitDisjunctContains(?d1, ?p1), HasPrerequisites(?p1, ?d2), UnitDisjunctContains(?d2, ?p2) -> UnitDisjunctContains(?d1, ?p2)"
+    )
 
     with open("units.json", "r") as units, open("majors.json", "r") as majors:
         units_json = json.load(units)
@@ -185,7 +190,8 @@ with onto:
             if "contact" in unit:
                 for cnt in unit["contact"]:
                     hours = int(unit["contact"][cnt].strip())
-                    if hours == 0: # in case of the crawler failed to get a positive number of hours
+                    if hours == 0:
+                        # in case of the crawler failed to get a positive number of hours
                         continue
                     cnt = cnt.lower()
                     if "lec" in cnt:
@@ -235,9 +241,7 @@ with onto:
                     unit_instance.HasPrerequisites = unit_disjuncts
 
             if "text" in unit:
-                unit_instance.HasRequiredText = [
-                    text.strip() for text in unit["text"]
-                ]
+                unit_instance.HasRequiredText = [text.strip() for text in unit["text"]]
 
         for major in json.load(majors).values():
             code = major["code"].strip()
@@ -250,7 +254,8 @@ with onto:
 
             major_instance.HasUnit = [
                 Unit(f"unitdetails?code={unit_code.strip()}")
-                for unit_code in major["units"] if unit_code in units_json
+                for unit_code in major["units"]
+                if unit_code in units_json
             ]
 
             if "outcomes" in major:
@@ -261,14 +266,6 @@ with onto:
             if "bridging" in major:
                 major_instance.HasBridging = [
                     Unit(f"unitdetails?code={unit_code.strip()}")
-                    for unit_code in major["bridging"] if unit_code in units_json
+                    for unit_code in major["bridging"]
+                    if unit_code in units_json
                 ]
-
-print(validate(default_world.as_rdflib_graph(), shacl_graph=Graph().parse("shacl.ttl"))[2])
-try:
-    sync_reasoner_pellet(infer_property_values=True, infer_data_property_values=True)
-except OwlReadyInconsistentOntologyError as e:
-    print(e)
-graph = default_world.as_rdflib_graph()
-if __name__ == '__main__':
-    onto.save("handbook.xml")

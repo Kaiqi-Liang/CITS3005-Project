@@ -1,0 +1,103 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+	<meta charset="UTF-8">
+	<meta name="viewport" content="width=device-width, initial-scale=1.0">
+	<title>Handbook</title>
+	<script src="index.js" defer></script>
+	<style>
+		body {
+			background: black;
+			color: white;
+		}
+	</style>
+</head>
+<body>
+	<table border="1">
+		<thead>
+			<tr>
+				<th>Query</th>
+				<th>Explanation</th>
+				<th>Default</th>
+			</tr>
+		</thead>
+		<tbody>
+			<tr>
+				<td>query1</td>
+				<td>Find units with more than some number of outcomes</td>
+				<td>6 outcomes</td>
+			</tr>
+			<tr>
+				<td>query2</td>
+				<td>Find units at some level that do not have an exam, and where none of their prerequisites have an exam</td>
+				<td>level 3</td>
+			</tr>
+			<tr>
+				<td>query3</td>
+				<td>Find units that appear in more than some number of majors</td>
+				<td>3 majors</td>
+			</tr>
+			<tr>
+				<td>query4</td>
+				<td>Given a query string find the units that contain this string in the description or outcomes</td>
+				<td>"Environmental Policy"</td>
+			</tr>
+			<tr>
+				<td>query5</td>
+				<td>Find the units outside of my major that have a certain prerequisite</td>
+				<td>cyber major, unit cits2200</td>
+			</tr>
+			<tr>
+				<td>query6</td>
+				<td>Find the majors that have less than some number of contact hours in total that are not a certain type of contact hour (summing all different types of contact hours across all units)</td>
+				<td>2 contact hours that are not field trip</td>
+			</tr>
+			<tr>
+				<td>query7</td>
+				<td>Find the majors that don't have a certain type of assessment</td>
+				<td>exam</td>
+			</tr>
+			<tr>
+				<td>query8</td>
+				<td>Find the majors that I can transfer to from my current completed major so that I only have to take no more than some number more units</td>
+				<td>cmpsc major, 5 units</td>
+			</tr>
+		</tbody>
+	</table>
+	<form name="form">
+		<select name="query">
+			<option value="shacl">SHACL</option>
+			<option value="query1">Query1</option>
+			<option value="query2">Query2</option>
+			<option value="query3">Query3</option>
+			<option value="query4">Query4</option>
+			<option value="query5">Query5</option>
+			<option value="query6">Query6</option>
+			<option value="query7">Query7</option>
+			<option value="query8">Query8</option>
+			<option value="other">Other</option>
+		</select>
+		<input name="input1" type="number" style="display: none;">
+		<input name="input2" type="text" style="display: none;">
+		<select name="contact_hour" style="display: none;">
+        	<option value="Lecture">Lecture</option>
+        	<option value="Tutorial">Tutorial</option>
+        	<option value="Lab">Lab</option>
+        	<option value="Workshop">Workshop</option>
+        	<option value="FiledTrip">FieldTrip</option>
+        	<option value="Practice">Practice</option>
+        	<option value="OtherContactHour">OtherContactHour</option>
+		</select>
+		<select name="assessment" style="display: none;">
+        	<option value="Exam">Exam</option>
+        	<option value="Test">Test</option>
+        	<option value="Assignment">Assignment</option>
+        	<option value="Presentation">Presentation</option>
+        	<option value="Participation">Participation</option>
+        	<option value="Practical">Practical</option>
+        	<option value="OtherAssessment">OtherAssessment</option>
+		<input name="submit" type="submit" value="Query">
+	</form>
+	<img src="spinner.svg" alt="spinner" style="display: none;">
+</body>
+</html>
