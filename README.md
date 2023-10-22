@@ -18,7 +18,7 @@ Then create a new virtual environment called `kr` with all the dependencies inst
 conda env create --file kr.yml
 ```
 
-If it already exists rename the file `kr.yml` to something else that does not exist and run the command again with the new file name, then the virtual environment.
+If it already exists rename the file `kr.yml` to something else that does not exist and run the command again with the new file name, then activate the virtual environment.
 
 ```bash
 conda activate kr
@@ -31,7 +31,7 @@ export OPENAI_API_KEY=openai-api-key
 python server.py
 ```
 
-After about 5 seconds it will output a lot of relations the `Pellet` reasoner inserted, then it will print out the server is running on a URL, this URL must be the same as the `SERVER_URL` defined in the first line of the [JavaScript file](index.js#L1), by default it will be `http://127.0.0.1:5000`. Once this is all set up open the [HTML file](index.html) in your browser.
+After about 5 seconds it will output a lot of relations the `Pellet` reasoner inserted, then it will print out the server is running on a URL, this URL must be the same as the `SERVER_URL` defined in the first line of the [JavaScript file](index.js#L1), by default it will be `http://127.0.0.1:5000`. Once this is all set up, navigate to the user interace by opening the [HTML file](index.html) in your browser.
 
 ```bash
 open index.html
