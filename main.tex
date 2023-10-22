@@ -1,0 +1,107 @@
+\documentclass{article}
+\usepackage{graphicx}
+\usepackage{amsmath}
+\usepackage{listings}
+\usepackage{xcolor}
+\usepackage{hyperref}
+\usepackage[margin=2cm]{geometry}
+\definecolor{backgroundcolour}{rgb}{0.05,0.06,0.09}
+\definecolor{textcolour}{rgb}{0.78,0.81,0.85}
+\pagecolor{backgroundcolour}
+\color{textcolour}
+\begin{document}
+\title{CITS3005 Knowledge Representation Project Individual Report}
+\author{Kaiqi Liang 23344153}
+\maketitle
+\section*{Design Choices}
+\subsection*{Ontology}
+\begin{enumerate}
+	\item \verb|Assessment|\begin{enumerate}
+		\item Exam: contains 'exam' or 'final' for final exams / finals
+		\item Test: contains 'test', 'quiz' or something along the lines of 'midsem' for mid-semester test
+		\item Assignment: contains 'report', 'portfolio', 'project' or 'assignment' for all sorts of assignments
+		\item Presentation: contains 'presentation'
+		\item Participation: contains 'participation'
+		\item Practical: contains 'prac', 'trip', 'site', 'visit' or 'lab' for all sorts of practical assessments
+		\item OtherAssessment: everything else
+	\end{enumerate}
+	\item \verb|Contact Hours|\begin{enumerate}
+		\item Lecture: contains 'lec'
+		\item Workshop: contains 'workshop', 'seminar' or 'studio'
+		\item Practice: contains 'prac'
+		\item Tutorial: contains 'tut'
+		\item Lab: contains 'lab'
+		\item FieldTrip: contains 'field' or 'site' for field trip and site visit
+		\item OtherContactHour: everything else
+	\end{enumerate}One downside with this approach is that many units have 'lectures and practical hours' written and our program will just put it all in lecture hours because that check is earlier than the check for practical hours. Although this is an oversimplification there is no correct way for us to divide them anyway because we simply were not given that information, and it is also way more work to distinguish and separte them, so the outcome of that is not worth the effort of doing it, they are both just estimations at the end of the day.
+	\item For the contact hours that are very large, one that has 100 hours, which is probably over the entire semester rather than weekly or it could be not broken down into different types of contact hours, instead some of them just say 'typically 20 hours biweekly', we decided to just ignore these cases, as the crawler is only getting a single digit which makes all the data sensible for a weekly contact hours.
+	\item For some classes like \verb|DeliveryMode| we decided to only create 3 instances \verb|online|	\verb|face2face| and \verb|hybrid| and reuse those nodes for every unit. However some other classes like \verb|Assessment| and \verb|ContactHour| we had to create new instances for every unit because a unit might have multiple exams, or multiple types of contact hours that are grouped into 1 by us.
+	\item We chose not to include prerequisites for majors because all of them are just raw text. For future improvements we can fine tune a pretrained model like \verb|Bart| with all those natural language and fall back to a question answering by the fine tuned model when asked about prerequisites for majors. However prerequisites for units are parsed into the ontology which can be quired using \verb|SPARQL|.
+	\item For the unit prerequisites we decided to have a class \verb|UnitDisjunct| and create a new instance for each disjunction in the \verb|prerequisites_cnf|, and each disjunction instance will contain one to many units which link to the units node with its code as the URI, which means if the unit has not been created when the prerequisite is parsed a new node will be created for that unit and later on when the information of that unit is parsed its properties will be filled.
+\end{enumerate}
+\subsection*{SHACL}
+\begin{enumerate}
+	\item If a prerequisite is a unit that is not in the \verb|units.json| do not include it, this is to prevent \verb|SHACL| from complaining about units that do not have the necessary information like title.
+	\item There are actually a lot of units that have prerequisites on the same level as the unit itself, but there are only 4 units whose prerequisites have a higher level. Hence we decided to change the constraint to every prerequisite for a level X unit should not have a level higher than X, this will fail the \verb|SHACL| constraint and output 4 vialations.
+	\item When we were running \verb|SHACL| the contact hour constraint where it must have exactly one outgoing link to a positive integer failed and we noticed that some contact hours are 0 because the crawler was not able to get the correct number of contact hours for some units, so we decided to add a condition where if the hours is 0 don't even create an instance of ContactHour because 0 hour is a useless information, and it will not have any impact when we do the aggregate queries on contact hours. We didn't choose to fix the crawler instead because it might break other edge cases and this is the simplest solution.
+\end{enumerate}
+
+\section*{Tools}
+\subsection*{Owlready}
+\verb|Owlready| is a package for manipulating \verb|OWL| ontologies in \verb|Python|. An ontology is a formal description of knowledge that can be exploited by a machine, and \verb|OWL| is the \verb|Web Ontology Language| standardised by \verb|W3C| which is one of the most used to formalise ontologies. \verb|Owlready| specifically version2 (\verb|owlready2|) is one of the tools we used in this project. It integrates ontologies really well with object-oriented programming in where objects and classes are the entities of an ontology. It allows for the reuse of knowledge, rules and axioms and it provides automatic reasoning that can perform logical inferences to infer new facts from existing knowledge.
+
+These are some of the advantages. It is very \textbf{expressive} and you can be very explicit about the knowledge being captured with support like \verb|AllDisjoint|, \verb|FunctionalProperty| etc. It also has the \textbf{access speed} of a relational database, with its fast storage and search capabilities, as well as the \textbf{agility} of object-oriented programming langauges such as \verb|Python|, with the ability to execute imperative code which is not possible with an ontology or a database alone.
+
+Hence I would recommend to use for any complicated knowledge that cannot be expressed by relational and graph databases.
+\subsection*{SWRL}
+\verb|SWRL| is the \verb|Semantic Web Rule Language| which is a language that allows you to integrate inference rules into ontologies. It can be created by using the \verb|Imp| class in \verb|Owlready| which is the abbreviation of \verb|implies|. \verb|SWRL| rules consist of one or more conditions and one or more consequences, separated by an arrow \verb|->|. This allows us to add additional relations to the ontology based on the existing ones, when a reasoner is executed.
+
+We decided to use \verb|SWRL| to specify more axioms instead of explicitly in \verb|RDFS| (RDF Schema) because the schema cannot be realised without an entailment engine while \verb|SWRL| rules can be enforced via the integrated \verb|HermiT| or \verb|Pellet| reasoners. Plus \verb|Owlready| already makes use of the properties in \verb|RDFS| for example, inheriting an OWL class adds a \verb|rdfs:subClassOf| relation.
+
+With the ability to use free variables to represent individuals or values, we can easily carry out some complex reasoning that is not allowed in \verb|OWL| because it simply cannot be achieved by class definitions (via equivalence relations).
+
+However the \verb|SWRL| rules have a major drawback, they are dependent on a given application, which is contrary to the objective of independence of the ontologies, once it is used it does not allow other applications for which we can reuse our ontology.
+
+Therefore I would recommend first using formal definitions and only use \verb|SWRL| rules on top of \verb|Owlready| to enforce axioms that are not explicit in your ontology when the reasoning is too complex for the definitions and to aid with automatic reasoning.
+\subsection*{Pellet}
+\verb|Pellet| is one of te 2 automatic reasoners that come with \verb|Owlready|, the other one is \verb|HermiT| which does not support all features of \verb|SWRL|.
+
+It is very powerful as you can specify both \verb|infer__data_property_values| and \verb|infer_property_values| which can automatically insert new data properties and object properties based on the class definitions as well as \verb|SWRL| rules. It also includes \verb|RDFS| type definitions like \verb|Transitive|, \verb|Inverse| etc and automatically infer them.
+
+I highly recommend using the \verb|Pellet| reasoner for any ontologies you have to deduce hidden insights that might not even be obvious to human.
+\subsection*{RDFLib}
+\verb|RDFLib| is a pure \verb|Python| package for working with Resource Description Framework (\verb|RDF|) which is a graph model for the formal description of resources and metadata. In particular, any OWL ontology can be expressed in the form of an RDF graph. An RDF graph consists of a set of RDF triples of the form (subject, predicate, object). The predicate corresponds to a property in the OWL sense. We were able to use \verb|default_world.as_rdflib_graph()| to get a RDF graph from our ontology and run \verb|SPARQL| queries on it.
+
+I recommend it for implementing a knowledge base as it integrates really well with \verb|Owlready| so it becomes seemless to add an ontology on top of a knowledge graph. Compared to using \verb|Neo4J| instead of RDF you will have to export the knowledge graph to an OWL format.
+\subsection*{pySHACL}
+\verb|pySHACL| is a pure \verb|Python| module which allows for the validation of RDF graphs against Shapes Constraint Language (\verb|SHACL|) graphs. This module uses the \verb|rdflib| Python library for working with RDF which makes it very easy to validate a RDF graph, the \verb|validate| function from \verb|pySHACL| just takes in a RDF graph and a \verb|SHACL| graph and output whether it conforms or not, if not it will show all the constraints that were violated.
+
+I definitely recommend using it like writing tests for your knowledge graph, it helps to make sure certain properties were met for example could be checking the transitivity deduced by the reasoner.
+\subsection*{Flask}
+\verb|Flask| is a Python module which allows you to easily create websites. We used it to implement endpoints that do different tasks based on user's actions in the frontend. For example if query1 is selected the \verb|/query1| endpoint will be hit and the it runs the first \verb|SPARQL| query and returns the results to the request. Similarly if \verb|SHACL| is selected then the frontend will send a request to the \verb|/shacl| endpoint which validates the constrains and send back the validation report.
+
+I would only recommend this for implementing a small scale development server or a prototype as \verb|Python| is not a type safe langauge. When we were implementing it there were a lot of times when the server crashed and sent a 500 error to the frontend due to a \verb|TypeError| occurring at runtime. Could be accidentally comparing a string with an integer because everything sent over HTTP ended up being a string even though it was meant to be a number and we forgot to type cast it. In a production environment this is not ideal, you would want to reduce the chance of your server crashing as much as possible.
+
+Therefore if you are looking to build a modern industry standard web server, a better option would be the \verb|express| framework using \verb|TypeScript| because of its expressive type system and type guarantee.
+\subsection*{HTML}
+\verb|HTML| is the standard markup language for the web, it stands for \verb|HyperText Markup Langauge|, specifically we used \verb|HTML5| as it is the fifth and final major version recommended by \verb|W3C|. This works well with OWL to shape the semantic web along with the use of \verb|JavaScript| to make the web more dynamic.
+
+However writing plain \verb|HTML| and \verb|JavaScript| is extremely tedious and not scalable as it is very easy to have code duplications which is a great source of bugs. Along with the \verb|JavaScript| being dynamically typed like \verb|Python| similar issues have occurred during our developement. This is why so many frontend frameworks have been created in recent years to aid the industry of web developement.
+
+Hence I would not recommend coding \verb|HTML| and vanilla \verb|JavaScript| for a modern website. Frontend frameworks like \verb|React| combines \verb|HTML| and \verb|JavaScript| into \verb|JSX| which is much nicer to deal with in a large scale web application.
+\subsection*{OpenAI}
+The OpenAI API can be applied to virtually any task that requires understanding or generating natural language and code. We used the \href{https://platform.openai.com/docs/guides/gpt/chat-completions-api}{Chat completions API} to generate \verb|SPARQL| queries based on user input. With some prompt engineering of setting up the ontology and restricting the API to only generate \verb|SPARQL| queries and nothing else, we were able to get somewhat accurate results for most queries that are not too complex.
+
+This prevented LLMs to hallucinate as it has to return the results from a knowledge graph, with further fine tuning the models are usually really good at generating code, in this case \verb|SPARQL| queries as it has strict syntax and structure to it compared to natural langauge.
+
+The OpenAI API can also be used to generate and edit images or convert speech into text, I highly recommend it due to its versatility and capabilities, \verb|gpt4|	is one of the state of the art models.
+
+\section*{Teamwork}
+\subsection*{Estimated Time}
+We both spent around 35 hours on the project, we met up in person almost every time we worked on it. It can be broken down into 11 hours on implementing the ontology, 6 hours on SPARQL and SHACL respectively, 8 hours on the web application, and 4 hours on the report.
+
+\subsection*{Collaboration}
+The first part of the project including ontology, \verb|SHACL|, \verb|SPARQL| and reasoning were done together. Then I implemented the frontend and the backend server as a bonus while my partner worked on the user manual. Both strategies were very effective, we were both new to the first part as we just learnt it this semester so it was very helpful to have another pair of eyes looking at the code being written. We found the ontology very difficult to get right because there are many different ways to do things and it offers so many features like \verb|defined classes| and \verb|equivalence relations| etc. We had to read the ontology textbook together to understand what the best way to do things is and what features of \verb|Owlready| we should be using. The best part about pair programming is actually debugging, it is so much quicker to figure out the problem and fix it having 2 different perspectives. On the other hand, I have done a lot of web development and used the OpenAI API before so was able to implement the user interface and the server relatively quickly, while my teammate is very good at report writing and since we went through the whole process of creating the ontology and implementing the queries and constraints together she was very across on what to write. This ended up being a very equal divide on the workload.
+
+I really appreciate my teammate writing most of the report and luckily she also enjoys the writing. I only inputted some suggestions and added small changes but it ended up being a really well written user manual.
+\end{document}
