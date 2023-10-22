@@ -1,0 +1,140 @@
+@prefix sh: <http://www.w3.org/ns/shacl#> .
+@prefix xsd: <http://www.w3.org/2001/XMLSchema#> .
+@prefix handbook: <https://handbooks.uwa.edu.au/> .
+
+handbook:MajorShape a sh:NodeShape ;
+    sh:targetClass handbook:Major ;
+    sh:property [
+        sh:path handbook:HasUnit ;
+        sh:minCount 1 ;
+        sh:maxCount 58 ;
+    ] ;
+    sh:property [
+        sh:path handbook:HasCode ;
+        sh:minCount 1 ;
+        sh:maxCount 1 ;
+    ] ;
+    sh:property [
+        sh:path handbook:HasTitle ;
+        sh:minCount 1 ;
+        sh:maxCount 1 ;
+    ] ;
+    sh:property [
+        sh:path handbook:HasSchool ;
+        sh:minCount 1 ;
+        sh:maxCount 1 ;
+    ] ;
+    sh:property [
+        sh:path handbook:HasOutcome ;
+        sh:maxCount 26 ;
+    ] ;
+    sh:sparql [
+        a sh:SPARQLConstraint ;
+        sh:severity sh:Violation ;
+        sh:message "No major should require more than 80 contact hours for the same level of units" ;
+        sh:select """
+            PREFIX handbook: <https://handbooks.uwa.edu.au/>
+            SELECT $this
+            WHERE {
+                $this handbook:HasUnit ?unit .
+                ?unit handbook:HasContactHour / handbook:HasHours ?hours .
+                ?unit handbook:IsLevel ?level .
+            }
+            GROUP BY $this ?level
+            HAVING (SUM(?hours) > 80)
+        """ ;
+    ] ;
+    sh:sparql [
+        a sh:SPARQLConstraint ;
+        sh:severity sh:Violation ;
+        sh:message "A unit in a major cannot be a bridging unit for the same major" ;
+        sh:select """
+            PREFIX handbook: <https://handbooks.uwa.edu.au/>
+            SELECT $this
+            WHERE {
+                $this handbook:HasUnit ?unit .
+                $this handbook:HasBridging ?bridging_unit .
+                FILTER (?unit = ?bridging_unit) .
+            }
+        """ ;
+    ] .
+
+handbook:UnitShape a sh:NodeShape ;
+    sh:targetClass handbook:Unit ;
+    sh:property [
+        sh:path handbook:HasCode ;
+        sh:minCount 1 ;
+        sh:maxCount 1 ;
+    ] ;
+    sh:property [
+        sh:path handbook:HasTitle ;
+        sh:minCount 1 ;
+        sh:maxCount 1 ;
+    ] ;
+    sh:property [
+        sh:path handbook:IsLevel ;
+        sh:minCount 1 ;
+        sh:maxCount 1 ;
+    ] ;
+    sh:property [
+        sh:path handbook:HasOutcome ;
+        sh:maxCount 39 ;
+    ] ;
+    sh:sparql [
+        a sh:SPARQLConstraint ;
+        sh:severity sh:Violation ;
+        sh:message "Every prerequisite for a level X unit should not have a level higher than X" ;
+        sh:select """
+            PREFIX handbook: <https://handbooks.uwa.edu.au/>
+            SELECT $this
+            WHERE {
+                $this handbook:HasPrerequisites / handbook:UnitDisjunctContains / handbook:IsLevel ?pre_level .
+                $this handbook:IsLevel ?level .
+                FILTER (?pre_level > ?level) .
+            }
+        """ ;
+    ] ;
+    sh:sparql [
+        a sh:SPARQLConstraint ;
+        sh:severity sh:Violation ;
+        sh:message "No unit should be its own prerequisite" ;
+        sh:select """
+            PREFIX handbook: <https://handbooks.uwa.edu.au/>
+            SELECT $this
+            WHERE {
+                $this handbook:HasPrerequisites / handbook:UnitDisjunctContains / handbook:HasCode ?pre_code .
+                $this handbook:HasCode ?code .
+                FILTER (?code = ?pre_code) .
+            }
+        """ ;
+    ] ;
+    sh:sparql [
+        a sh:SPARQLConstraint ;
+        sh:severity sh:Violation ;
+        sh:message "The level of a unit should be the 5th character of the unit code" ;
+        sh:select """
+            PREFIX handbook: <https://handbooks.uwa.edu.au/>
+            SELECT $this
+            WHERE {
+                $this handbook:IsLevel ?level  .
+                $this handbook:HasCode ?code .
+                FILTER (SUBSTR(str(?code), 5, 1) != str(?level)) .
+            }
+        """ ;
+    ] .
+
+handbook:ContactHour a sh:NodeShape ;
+    sh:targetClass handbook:ContactHour ;
+    sh:property [
+        sh:path handbook:HasHours ;
+        sh:minCount 1 ;
+        sh:maxCount 1 ;
+        sh:minInclusive 1 ;
+    ] .
+
+handbook:UnitDisjunct a sh:NodeShape ;
+    sh:targetClass handbook:UnitDisjunct ;
+    sh:property [
+        sh:path handbook:UnitDisjunctContains ;
+        sh:minCount 1 ;
+    ] .
