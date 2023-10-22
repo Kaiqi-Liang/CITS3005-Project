@@ -54,6 +54,7 @@ def cleanup(*_):
 
 
 signal.signal(signal.SIGINT, cleanup)
+signal.signal(signal.SIGTERM, cleanup)
 
 
 @app.route("/query1", methods=["post"])
