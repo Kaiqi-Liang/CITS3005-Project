@@ -163,5 +163,5 @@ def majors_with_less_units(graph, major_code: str, units: int):
         )
         if list(result)[0].total.toPython() > units:
             continue
-        majors.append(r.major)
+        majors.append([r.major])
     return majors
