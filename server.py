@@ -1,4 +1,3 @@
-import os
 import json
 import signal
 import openai
@@ -18,8 +17,6 @@ from query import (
     units_with_more_outcomes,
     units_with_no_exam,
 )
-
-openai.api_key = os.getenv("OPENAI_API_KEY")
 
 onto.save("handbook.owl")
 sync_reasoner_pellet(infer_property_values=True, infer_data_property_values=True)
