@@ -130,7 +130,7 @@ form.addEventListener('submit', async (event) => {
 			for (const value of data) {
 				const li = document.createElement('li');
 				for (const atom of value) {
-					if (atom.includes('=')) {
+					if (atom.includes('=')) { // if it is a valid URL
 						const a = document.createElement('a');
 						a.href = value;
 						a.target = '_blank';
