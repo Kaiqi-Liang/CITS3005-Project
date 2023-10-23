@@ -182,7 +182,7 @@ def other():
     if query.lower() in cache["other"]:
         return cache["other"][query.lower()]
     prompt = """
-    This is the ontology created using `owlready2`
+    This is the ontology created using `owlready2`.
     ```python
     class Unit(Thing): pass
     class Major(Thing): pass
@@ -234,19 +234,25 @@ def other():
         domain = [Unit | Major]
         range = [str]
     ```
-    Assume the namespace is already set to `handbook`, you are a helpful assistant that generates SPARQL queries for a given prompt. Here is a simple example of what I would like you to return given the prompt is to "find the units with more than 6 outcomes", notice that I do not want you to include any code block markdown symbols, just give me the SPARQL query in plain text
-    SELECT ?unit
-    WHERE {
-        ?unit rdf:type handbook:Unit ;
-              handbook:HasOutcome ?outcome .
-    }
-    GROUP BY ?unit
-    HAVING (COUNT(?outcome) > 6)
+    You are a helpful knowledge base assistant. You are to generate SPARQL queries for a given prompt assuming the namespace is already set to `handbook`.
     """
     for choice in openai.ChatCompletion.create(
         model="gpt-4",
         messages=[
             {"role": "system", "content": prompt},
+            {"role": "user", "content": "find the units with more than 6 outcomes"},
+            {
+                "role": "assistant",
+                "content": """
+                SELECT ?unit
+                WHERE {
+                    ?unit rdf:type handbook:Unit ;
+                          handbook:HasOutcome ?outcome .
+                }
+                GROUP BY ?unit
+                HAVING (COUNT(?outcome) > 6)
+                """,
+            },
             {"role": "user", "content": query},
         ],
         n=3,
