@@ -54,6 +54,79 @@ signal.signal(signal.SIGINT, cleanup)
 signal.signal(signal.SIGTERM, cleanup)
 
 
+prompt = """
+This is the ontology created using `owlready2`.
+```python
+class Unit(Thing): pass
+class Major(Thing): pass
+AllDisjoint([Unit, Major])
+class HasUnit(Major >> Unit): pass
+class HasSchool(Major >> str, FunctionalProperty): pass
+class HasBridging(Major >> Unit): pass
+class Assessment(Thing): pass
+class Exam(Assessment): pass
+class Test(Assessment): pass
+class Assignment(Assessment): pass
+class Presentation(Assessment): pass
+class Participation(Assessment): pass
+class Practical(Assessment): pass
+class OtherAssessment(Assessment): pass
+class HasAssessment(Unit >> Assessment): pass
+class ContactHour(Thing): pass
+class Lecture(ContactHour): pass
+class Tutorial(ContactHour): pass
+class Lab(ContactHour): pass
+class Workshop(ContactHour): pass
+class FieldTrip(ContactHour): pass
+class Practice(ContactHour): pass
+class OtherContactHour(ContactHour): pass
+class HasContactHour(Unit >> ContactHour): pass
+class HasHours(ContactHour >> int, FunctionalProperty): pass
+class IsLevel(Unit >> int, FunctionalProperty): pass
+class DeliveryMode(Thing): pass
+class Online(DeliveryMode): pass
+class Face2Face(DeliveryMode): pass
+class Hybrid(DeliveryMode): pass
+class IsDeliveryMode(Unit >> DeliveryMode, FunctionalProperty): pass
+class UnitDisjunct(Thing): pass
+class UnitDisjunctContains(UnitDisjunct >> Unit): pass
+class HasPrerequisites(Unit >> UnitDisjunct): pass
+class HasCode(DataProperty, FunctionalProperty):
+    domain = [Unit | Major]
+    range = [str]
+class HasTitle(DataProperty, FunctionalProperty):
+    domain = [Unit | Major]
+    range = [str]
+class HasDescription(DataProperty, FunctionalProperty):
+    domain = [Unit | Major]
+    range = [str]
+class HasOutcome(DataProperty):
+    domain = [Unit | Major]
+    range = [str]
+class HasRequiredText(DataProperty):
+    domain = [Unit | Major]
+    range = [str]
+```
+You are a helpful knowledge base assistant. You are to generate SPARQL queries for a given prompt assuming the namespace is already set to `handbook`.
+"""
+messages = [
+    {"role": "system", "content": prompt},
+    {"role": "user", "content": "find the units with more than 6 outcomes"},
+    {
+        "role": "assistant",
+        "content": """
+                SELECT ?unit
+                WHERE {
+                    ?unit rdf:type handbook:Unit ;
+                          handbook:HasOutcome ?outcome .
+                }
+                GROUP BY ?unit
+                HAVING (COUNT(?outcome) > 6)
+                """,
+    },
+]
+
+
 @app.route("/query1", methods=["post"])
 def query1():
     outcomes = request.json["outcomes"]
@@ -176,85 +249,15 @@ def shacl():
 
 @app.route("/other", methods=["post"])
 def other():
+    global messages
     query = request.json["query"]
     if not query:
         query = 'Find the majors that are in the school of "Physics, Mathematics and Computing'
     if query.lower() in cache["other"]:
         return cache["other"][query.lower()]
-    prompt = """
-    This is the ontology created using `owlready2`.
-    ```python
-    class Unit(Thing): pass
-    class Major(Thing): pass
-    AllDisjoint([Unit, Major])
-    class HasUnit(Major >> Unit): pass
-    class HasSchool(Major >> str, FunctionalProperty): pass
-    class HasBridging(Major >> Unit): pass
-    class Assessment(Thing): pass
-    class Exam(Assessment): pass
-    class Test(Assessment): pass
-    class Assignment(Assessment): pass
-    class Presentation(Assessment): pass
-    class Participation(Assessment): pass
-    class Practical(Assessment): pass
-    class OtherAssessment(Assessment): pass
-    class HasAssessment(Unit >> Assessment): pass
-    class ContactHour(Thing): pass
-    class Lecture(ContactHour): pass
-    class Tutorial(ContactHour): pass
-    class Lab(ContactHour): pass
-    class Workshop(ContactHour): pass
-    class FieldTrip(ContactHour): pass
-    class Practice(ContactHour): pass
-    class OtherContactHour(ContactHour): pass
-    class HasContactHour(Unit >> ContactHour): pass
-    class HasHours(ContactHour >> int, FunctionalProperty): pass
-    class IsLevel(Unit >> int, FunctionalProperty): pass
-    class DeliveryMode(Thing): pass
-    class Online(DeliveryMode): pass
-    class Face2Face(DeliveryMode): pass
-    class Hybrid(DeliveryMode): pass
-    class IsDeliveryMode(Unit >> DeliveryMode, FunctionalProperty): pass
-    class UnitDisjunct(Thing): pass
-    class UnitDisjunctContains(UnitDisjunct >> Unit): pass
-    class HasPrerequisites(Unit >> UnitDisjunct): pass
-    class HasCode(DataProperty, FunctionalProperty):
-        domain = [Unit | Major]
-        range = [str]
-    class HasTitle(DataProperty, FunctionalProperty):
-        domain = [Unit | Major]
-        range = [str]
-    class HasDescription(DataProperty, FunctionalProperty):
-        domain = [Unit | Major]
-        range = [str]
-    class HasOutcome(DataProperty):
-        domain = [Unit | Major]
-        range = [str]
-    class HasRequiredText(DataProperty):
-        domain = [Unit | Major]
-        range = [str]
-    ```
-    You are a helpful knowledge base assistant. You are to generate SPARQL queries for a given prompt assuming the namespace is already set to `handbook`.
-    """
     for choice in openai.ChatCompletion.create(
         model="gpt-4",
-        messages=[
-            {"role": "system", "content": prompt},
-            {"role": "user", "content": "find the units with more than 6 outcomes"},
-            {
-                "role": "assistant",
-                "content": """
-                SELECT ?unit
-                WHERE {
-                    ?unit rdf:type handbook:Unit ;
-                          handbook:HasOutcome ?outcome .
-                }
-                GROUP BY ?unit
-                HAVING (COUNT(?outcome) > 6)
-                """,
-            },
-            {"role": "user", "content": query},
-        ],
+        messages=messages + [{"role": "user", "content": query}],
         n=3,
     )["choices"]:
         sparql = choice.message.content
@@ -263,6 +266,10 @@ def other():
             result = list(graph.query(sparql))
             if len(result) > 0:
                 cache["other"][query.lower()] = result
+                messages += [
+                    {"role": "user", "content": query},
+                    {"role": "assistant", "content": sparql},
+                ]
                 return result
         except:
             continue
