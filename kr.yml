@@ -3,9 +3,9 @@ channels:
   - conda-forge
 dependencies:
   - python=3.11
+  - openai=0.28.1
   - owlready2
   - rdflib
   - pyshacl
   - flask
   - flask_cors
-  - openai
